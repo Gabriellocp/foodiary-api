@@ -17,11 +17,13 @@
     "bcryptjs": "^3.0.2",
     "dotenv": "^17.2.1",
     "drizzle-orm": "^0.44.3",
+    "jsonwebtoken": "^9.0.2",
     "serverless-offline": "^14.4.0",
     "typescript": "^5.8.3",
     "zod": "^4.0.10"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
     "drizzle-kit": "^0.31.4"
   }
 }
