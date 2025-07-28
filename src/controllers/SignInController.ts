@@ -1,9 +1,9 @@
 import { compare } from 'bcryptjs';
 import { eq } from 'drizzle-orm';
-import { sign } from 'jsonwebtoken';
 import z from 'zod';
 import { db } from '../db';
 import { usersTable } from '../db/schema';
+import { generateAccessToken } from '../lib/jwt';
 import { HttpRequest, HttpResponse } from "../types/Http";
 import { badRequest, ok, unauthorized } from "../utils/http";
 const schema = z.object({
@@ -33,13 +33,7 @@ export class SignInController {
             return unauthorized({ error: 'Invalid credentials' })
         }
 
-        const accessToken = sign(
-            {
-                sub: user.id
-            },
-            process.env.JWT_SECRET!,
-            { expiresIn: '3d' }
-        )
+        const accessToken = generateAccessToken(user.id)
 
         return ok({ accessToken })
     }
