@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import z from 'zod';
 import { db } from '../db';
 import { usersTable } from '../db/schema';
+import { generateAccessToken } from '../lib/jwt';
 import { HttpRequest, HttpResponse } from "../types/Http";
 import { badRequest, conflict, created } from "../utils/http";
 const schema = z.object({
@@ -48,8 +49,9 @@ export class SignUpController {
             .returning({
                 id: usersTable.id
             })
+        const accessToken = generateAccessToken(createdUser.id)
 
-        return created({ userId: createdUser.id })
+        return created({ accessToken })
     }
 
 }
