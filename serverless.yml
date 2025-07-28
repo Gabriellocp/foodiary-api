@@ -11,7 +11,8 @@ provider:
   runtime: nodejs22.x
   region: sa-east-1
   architecture: arm64
-
+  environment:
+    DATABASE_URL: ${env:DATABASE_URL}
 # Avoid replicating ALL CODE to all lambda functions
 package:
   individually: true
