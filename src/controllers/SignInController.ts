@@ -1,5 +1,6 @@
 import { compare } from 'bcryptjs';
 import { eq } from 'drizzle-orm';
+import { sign } from 'jsonwebtoken';
 import z from 'zod';
 import { db } from '../db';
 import { usersTable } from '../db/schema';
@@ -31,7 +32,16 @@ export class SignInController {
         if (!isPasswordValid) {
             return unauthorized({ error: 'Invalid credentials' })
         }
-        return ok({ userId: user.id })
+
+        const accessToken = sign(
+            {
+                sub: user.id
+            },
+            process.env.JWT_SECRET!,
+            { expiresIn: '3d' }
+        )
+
+        return ok({ accessToken })
     }
 
 }
