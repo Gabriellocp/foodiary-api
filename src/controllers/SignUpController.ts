@@ -1,7 +1,10 @@
+import { hash } from 'bcryptjs';
+import { eq } from 'drizzle-orm';
 import z from 'zod';
+import { db } from '../db';
+import { usersTable } from '../db/schema';
 import { HttpRequest, HttpResponse } from "../types/Http";
-import { badRequest, created } from "../utils/http";
-
+import { badRequest, conflict, created } from "../utils/http";
 const schema = z.object({
     goal: z.enum(['lose', 'maintan', 'gain']),
     gender: z.enum(['male', 'female']),
@@ -14,7 +17,6 @@ const schema = z.object({
         email: z.email(),
         password: z.string().min(8)
     })
-
 })
 export class SignUpController {
     static async handle(request: HttpRequest): Promise<HttpResponse> {
@@ -22,7 +24,32 @@ export class SignUpController {
         if (!success) {
             return badRequest({ errors: error?.issues })
         }
-        return created({ data })
+        const userAlreadyExists = await db.query.usersTable.findFirst({
+            columns: {
+                email: true
+            },
+            where: eq(usersTable.email, data.account.email)
+        })
+        if (userAlreadyExists) {
+            return conflict({ error: 'This email is already in use' })
+        }
+        // Create user account if email is not in use
+        const { account, ...rest } = data
+        const hashedPassword = await hash(account.password, 8)
+        const [createdUser] = await db.insert(usersTable).values({
+            ...account,
+            ...rest,
+            password: hashedPassword,
+            fats: 0,
+            proteins: 0,
+            calories: 0,
+            carbohydrates: 0
+        })
+            .returning({
+                id: usersTable.id
+            })
+
+        return created({ userId: createdUser.id })
     }
 
 }
