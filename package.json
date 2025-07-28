@@ -11,10 +11,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.1",
     "@types/aws-lambda": "^8.10.152",
     "@types/node": "^24.1.0",
+    "drizzle-orm": "^0.44.3",
     "serverless-offline": "^14.4.0",
     "typescript": "^5.8.3",
     "zod": "^4.0.10"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.4"
   }
 }
