@@ -3,11 +3,12 @@ import { eq } from 'drizzle-orm';
 import z from 'zod';
 import { db } from '../db';
 import { usersTable } from '../db/schema';
+import { calculateGoals } from '../lib/calculateGoals';
 import { generateAccessToken } from '../lib/jwt';
 import { HttpRequest, HttpResponse } from "../types/Http";
 import { badRequest, conflict, created } from "../utils/http";
 const schema = z.object({
-    goal: z.enum(['lose', 'maintan', 'gain']),
+    goal: z.enum(['lose', 'maintain', 'gain']),
     gender: z.enum(['male', 'female']),
     birthDate: z.iso.date(),
     height: z.number(),
@@ -37,14 +38,19 @@ export class SignUpController {
         // Create user account if email is not in use
         const { account, ...rest } = data
         const hashedPassword = await hash(account.password, 8)
+        const goals = calculateGoals({
+            activityLevel: rest.activityLevel,
+            birthDate: new Date(rest.birthDate),
+            gender: rest.gender,
+            goal: rest.goal,
+            height: rest.height,
+            weight: rest.weight
+        })
         const [createdUser] = await db.insert(usersTable).values({
             ...account,
             ...rest,
             password: hashedPassword,
-            fats: 0,
-            proteins: 0,
-            calories: 0,
-            carbohydrates: 0
+            ...goals
         })
             .returning({
                 id: usersTable.id
