@@ -11,10 +11,13 @@ provider:
   runtime: nodejs22.x
   region: sa-east-1
   architecture: arm64
-  environment:
-    DATABASE_URL: ${env:DATABASE_URL}
-    JWT_SECRET: ${env:JWT_SECRET}
-    BUCKET_NAME: !Ref UploadsBucket
+  # Create custom env_vars to handle dev stage
+  # https://stackoverflow.com/questions/73046674/how-can-i-assign-environment-variable-that-has-reference-of-conditional-resource
+  environment: ${self:custom.env_vars.${opt:stage, 'dev'}}
+  # environment:
+  #   DATABASE_URL: ${env:DATABASE_URL}
+  #   JWT_SECRET: ${env:JWT_SECRET}
+  #   BUCKET_NAME: !Ref UploadsBucket
   iam:
     role:
       statements:
@@ -23,6 +26,20 @@ provider:
             - s3:PutObject
           # Resource: !GetAtt UploadsBucket.Arn
           Resource: !Sub "${UploadsBucket.Arn}/*"
+
+custom:
+  env_vars:
+    local:
+      DATABASE_URL: ${env:DATABASE_URL}
+      JWT_SECRET: ${env:JWT_SECRET}
+      BUCKET_NAME: ${env:BUCKET_NAME}
+      AWS_ACCESS_KEY_ID: ${env:AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${env:AWS_SECRET_ACCESS_KEY}
+    prod:
+    dev:
+      DATABASE_URL: ${env:DATABASE_URL}
+      JWT_SECRET: ${env:JWT_SECRET}
+      BUCKET_NAME: !Ref UploadsBucket
 
 # Avoid replicating ALL CODE to all lambda functions
 package:
@@ -71,7 +88,15 @@ functions:
       - httpApi:
           path: /meals/{mealId}
           method: GET
-
+  fileUploadedEvent:
+    handler: src/function/fileUploadedEvent.handler
+    events:
+      - s3:
+          bucket: !Ref UploadsBucket
+          event: s3:ObjectCreated:*
+          # Bucket already exists
+          existing: true
+          forceDeploy: true
 resources:
   Resources:
     UploadsBucket:
