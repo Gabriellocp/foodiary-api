@@ -26,6 +26,10 @@ provider:
             - s3:PutObject
           # Resource: !GetAtt UploadsBucket.Arn
           Resource: !Sub "${UploadsBucket.Arn}/*"
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+          Resource: !GetAtt MealsQueue.Arn
 
 custom:
   env_vars:
@@ -35,11 +39,13 @@ custom:
       BUCKET_NAME: ${env:BUCKET_NAME}
       AWS_ACCESS_KEY_ID: ${env:AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${env:AWS_SECRET_ACCESS_KEY}
+      MEALS_QUEUE_URL: ${env:MEALS_QUEUE_URL}
     prod:
     dev:
       DATABASE_URL: ${env:DATABASE_URL}
       JWT_SECRET: ${env:JWT_SECRET}
       BUCKET_NAME: !Ref UploadsBucket
+      MEALS_QUEUE_URL: !Ref MealsQueue
 
 # Avoid replicating ALL CODE to all lambda functions
 package:
@@ -89,7 +95,7 @@ functions:
           path: /meals/{mealId}
           method: GET
   fileUploadedEvent:
-    handler: src/function/fileUploadedEvent.handler
+    handler: src/functions/fileUploadedEvent.handler
     events:
       - s3:
           bucket: !Ref UploadsBucket
